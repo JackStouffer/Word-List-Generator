@@ -67,13 +67,23 @@ void genWordList()
 
 void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
 {
+    import std.algorithm.searching : canFind;
     import std.conv : to;
     import std.string : replace, toLower, capitalize, toUpper;
+
+    // some people leave spaces in their passwords
+    // most don't
+    if (info.data.canFind(' '))
+    {
+        auto temp = info;
+        temp.data = temp.data.replace(" ", "");
+        commonGuesses(temp, output);
+    }
 
     auto lower = info.data.toLower;
     auto capitalized = info.data.capitalize;
     auto upper = info.data.toUpper;
-    auto leet = info.data.replace("e", "3").replace("t", "7").replace("l", "1");
+    auto leet = info.data.toLower.replace("e", "3").replace("t", "7").replace("l", "1");
     // optimize for rare case where there are no "1337" characters in
     // the item
     bool useLeet = leet != lower && leet != capitalized && leet != upper;
@@ -227,7 +237,7 @@ void getData()
 void main()
 {
     writeln(q{
-        [Word List Generator]
+                            [Targeted Word List Generator]
 
         FOR EDUCATIONAL PURPOSES ONLY. THE AUTHOR DOES NOT CONDONE NOR ENDORSE
         UNAUTHORIZED ACCESS OF COMPUTER SYSTEMS. Licensed under the MIT License.
@@ -249,7 +259,7 @@ void main()
         * make or model of cars the person has owned
         * favorite bands
 
-        Generated files are roughly of size n*4000, where n is the amount
+        Generated files are roughly of size n*40000, where n is the amount
         of info added.
 
         Commands:
