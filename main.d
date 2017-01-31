@@ -22,7 +22,6 @@ struct Info
     string data;
     Nullable!Date date;
 
-    // opAssign for Nullable doesn't work in the default ctor
     this(InfoType t, string d, Date d2)
     {
         type = t;
@@ -40,6 +39,10 @@ struct Info
 Info[] infoArray;
 
 
+/**
+ * Manages all of the separate guess generating functions and calls them
+ * from the data in infoArray
+ */
 void genWordList()
 {
     import std.algorithm.iteration : map, filter;
@@ -56,7 +59,7 @@ void genWordList()
         commonGuesses(item, app);
 
     foreach (item; infoArray.filter!(a => a.type == InfoType.Date))
-        guessDate(item, app);
+        guessesFromDate(item, app);
 
     auto f = File("wordlist_" ~ to!string(cast(TimeOfDay) Clock.currTime()) ~ ".txt", "w");
     writeln("Writing ", app.data.length, " guesses to file ", f.name);
@@ -65,6 +68,14 @@ void genWordList()
 }
 
 
+/**
+ * Takes an Info with string data and generates common password
+ * patterns from the string.
+ *
+ * Params:
+ *     info = the Info to gen guesses from
+ *     ouput = an Output range for strings to put the guesses
+ */
 void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
 {
     import std.algorithm.searching : canFind;
@@ -135,10 +146,19 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     }
 
     if (info.type == InfoType.Person)
-        guessDate(info, output);
+        guessesFromDate(info, output);
 }
 
-void guessDate(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
+
+/**
+ * Take an Info with date info and generate guesses from common date
+ * formats
+ *
+ * Params:
+ *     info = the Info to gen guesses from
+ *     ouput = an Output range for strings to put the guesses
+ */
+void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
 {
     import std.conv : to;
 
@@ -192,7 +212,18 @@ void getData()
                 write("First Name: ");
                 auto name = readln.chomp;
                 write("Date of birth: ");
-                auto date = cast(Date) readln.chomp.parse;
+                Date date;
+
+                try
+                {
+                    date = cast(Date) readln.chomp.parse;
+                }
+                catch (Exception)
+                {
+                    writeln("Not a valid date");
+                    break;
+                }
+
                 infoArray ~= Info(InfoType.Person, name, date);
                 break;
 
@@ -206,7 +237,18 @@ void getData()
             case "date":
             case "d":
                 write("Date: ");
-                auto idate = cast(Date) readln.chomp.parse;
+                Date idate;
+
+                try
+                {
+                    idate = cast(Date) readln.chomp.parse;
+                }
+                catch (Exception)
+                {
+                    writeln("Not a valid date");
+                    break;
+                }
+
                 infoArray ~= Info(InfoType.Date, "", idate);
                 break;
 
