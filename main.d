@@ -42,20 +42,25 @@ Info[] infoArray;
 
 void genWordList()
 {
-    import std.algorithm.iteration : map, each;
+    import std.algorithm.iteration : map, filter;
     import std.algorithm.mutation : copy;
     import std.array : appender;
     import std.conv : to;
 
-    writeln("Generating list of roughly ", infoArray.length * 40_000, " guesses");
+    writeln("Generating list of password guesses");
 
     auto app = appender!(string[])();
     app.reserve(infoArray.length * 40_100);
 
-    foreach (item; infoArray)
+    foreach (item; infoArray.filter!(a => a.type != InfoType.Date))
         commonGuesses(item, app);
 
+    foreach (item; infoArray.filter!(a => a.type == InfoType.Date))
+        guessDate(item, app);
+
     auto f = File("wordlist_" ~ to!string(cast(TimeOfDay) Clock.currTime()) ~ ".txt", "w");
+    writeln("Writing ", app.data.length, " guesses to file ", f.name);
+
     app.data.map!(a => a ~ "\n").copy(f.lockingTextWriter());
 }
 
@@ -109,6 +114,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     }
     // other very common patterns
     foreach (s; ["12345", "123456", "1234567", "12345678", "123456789", "1234567890",
+        "00", "000", "0000", "00000", "000000", "0000000", "00000000", "000000000", "0000000000",
         "asdf", "qwerty", "zxcvbnm", "asdfghjkl", "ABC", "ASDF", "ZXCVBNM", "QWERTY"])
     {
         output.put(lower ~ s);
@@ -131,17 +137,27 @@ void guessDate(Output)(Info info, ref Output output) if (isOutputRange!(Output, 
     auto day = to!string(info.date.day);
 
     output.put(year ~ month ~ day);
+    output.put(year[2 .. $] ~ month ~ day);
     output.put(year ~ month);
+    output.put(year[2 .. $] ~ month);
     output.put(month ~ year);
+    output.put(month ~ year[2 .. $]);
+    output.put(month ~ day);
+    output.put(month ~ day ~ year);
     output.put(day ~ month ~ year);
     output.put(day ~ month);
 
-    foreach (sep; [",", ".", "/", "-"])
+    foreach (sep; [",", ".", "/", "-", "_"])
     {
         output.put(year ~ sep ~ month ~ sep ~ day);
+        output.put(year[2 .. $] ~ sep ~ month ~ sep ~ day);
         output.put(year ~ sep ~ month);
+        output.put(year[2 .. $] ~ sep ~ month);
         output.put(month ~ sep ~ year);
+        output.put(month ~ sep ~ year[2 .. $]);
+        output.put(month ~ sep ~ day);
         output.put(day ~ sep ~ month ~ sep ~ year);
+        output.put(month ~ sep ~ day ~ sep ~ year);
         output.put(day ~ sep ~ month);
     }
 }
@@ -226,7 +242,7 @@ void main()
 
         * the owner and their date of birth
         * all of the owners family members and their dates of birth
-        * Important dates, like an anniversary
+        * important dates, like an anniversary
         * names of the owners pets
         * places where the person has lived
         * names of the companies this person has worked for
@@ -237,13 +253,12 @@ void main()
         of info added.
 
         Commands:
-            common | c  = a string that represents something important to this person
-            person | p  = a person, will ask for name and DoB
-            pet | z     = a pet
-            date | d    = an important date
-            finish | f  = finish and generate
-            quit | q    = quit without generating
-
+            common | c  =  a string that represents something important to this person
+            person | p  =  a person, will ask for name and DoB
+            pet | z     =  a pet
+            date | d    =  an important date
+            finish | f  =  finish and generate
+            quit | q    =  quit without generating
     });
 
     getData();
