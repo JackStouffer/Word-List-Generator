@@ -1,8 +1,3 @@
-/+ dub.sdl:
-    name "wordlist_gen"
-    dependency "dateparser" version="~>3.0.0"
-+/
-
 import std.stdio;
 import std.datetime;
 import std.typecons;
@@ -48,6 +43,7 @@ static immutable commonPatterns = [
     "asdf", "asdfasdf", "asdfghjkl", "password", "q1w2e3r4", "qazwsx", "qwert",
     "qwerty", "qwertyuiop", "zxcvbnm"
 ];
+static immutable seperators = [",", ".", "/", "-", "_"];
 
 
 /**
@@ -117,7 +113,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     auto capitalized = info.data.capitalize;
     auto upper = info.data.toUpper;
     auto leet = info.data.toLeet;
-    // optimize for rare case where there are no "1337" characters in
+    // optimize for the case where there are no "1337" characters in
     // the item
     bool useLeet = leet != lower && leet != capitalized && leet != upper;
 
@@ -148,11 +144,12 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     // Also covers people who put a year at the end of something
     foreach (i; 0 .. 10_000)
     {
-        output.put(chain(lower, i.toChars, "\n"));
-        output.put(chain(capitalized, i.toChars, "\n"));
-        output.put(chain(upper, i.toChars, "\n"));
+        auto s = i.toChars;
+        output.put(chain(lower, s, "\n"));
+        output.put(chain(capitalized, s, "\n"));
+        output.put(chain(upper, s, "\n"));
         if (useLeet)
-            output.put(chain(leet, i.toChars, "\n"));
+            output.put(chain(leet, s, "\n"));
     }
 
     // other very common patterns
@@ -200,7 +197,7 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
     output.put(chain(day, month, year[2 .. year.length], "\n"));
     output.put(chain(day, month, "\n"));
 
-    foreach (sep; [",", ".", "/", "-", "_"])
+    foreach (sep; seperators)
     {
         output.put(chain(year, sep, month, sep, day, "\n"));
         output.put(chain(year[2 .. year.length], sep, month, sep, day, "\n"));
@@ -373,14 +370,16 @@ void main()
         * make or model of cars the person has owned
         * favorite bands
 
-        Generated files are roughly of size n*40000, where n is the amount
-        of info added.
+        Generated files are roughly of length in lines of n*40000, where n is
+        the amount of info added.
 
         Commands:
             common | c  =  a string that represents something important to this person
             person | p  =  a person, will ask for name and DoB
             pet | z     =  a pet
             date | d    =  an important date
+            phone | e   =  a phone number
+            address | w   =  a phone number
             finish | f  =  finish and generate
             quit | q    =  quit without generating
     });

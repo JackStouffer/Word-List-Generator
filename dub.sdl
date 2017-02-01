@@ -1,0 +1,6 @@
+name "wordlist_gen"
+description "A wordlist generator using targeted information"
+authors "Jack Stouffer"
+dependency "dateparser" version="~>3.0.0"
+license "MIT"
+targetType "executable"

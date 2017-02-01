@@ -2,3 +2,4 @@ wordlist_*
 .dub/
 *.sublime-*
 *.log
+dub.selections.json
