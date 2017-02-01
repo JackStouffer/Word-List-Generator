@@ -5,10 +5,12 @@ import std.range.primitives;
 
 enum InfoType
 {
+    Address,
     Common,
+    Date,
     Person,
     Pet,
-    Date
+    Phone,
 }
 
 struct Info
@@ -74,8 +76,17 @@ void genWordList()
         .array
         .combinations(app);
 
+    // Do the same for addresses and phone numbers
+    infoArray
+        .filter!(a => a.type == InfoType.Address || a.type == InfoType.Phone)
+        .map!(a => a.data)
+        .array
+        .combinations(app);
+
     //Get standard guesses from dates and strings
-    foreach (item; infoArray.filter!(a => a.type != InfoType.Date))
+    foreach (item; infoArray.filter!(a => a.type != InfoType.Date
+                                     && a.type != InfoType.Phone
+                                     && a.type != InfoType.Address))
         commonGuesses(item, app);
 
     foreach (item; infoArray.filter!(a => a.type == InfoType.Date))
@@ -262,6 +273,7 @@ auto toLeet(string input)
 
 void getData()
 {
+    import std.conv : to;
     import std.string : chomp;
     import dateparser : parse;
 
@@ -319,6 +331,42 @@ void getData()
                 infoArray ~= Info(InfoType.Date, "", idate);
                 break;
 
+            case "phone":
+            case "e":
+                write("Phone Number: ");
+                auto phone = readln.chomp;
+
+                try
+                {
+                    cast(void) to!size_t(phone);
+                }
+                catch (Exception)
+                {
+                    writeln("Not a valid phone number. Please only use numbers");
+                    break;
+                }
+
+                infoArray ~= Info(InfoType.Phone, phone);
+                break;
+
+            case "address":
+            case "w":
+                write("Address Number: ");
+                auto address = readln.chomp;
+
+                try
+                {
+                    cast(void) to!size_t(address);
+                }
+                catch (Exception)
+                {
+                    writeln("Not a valid address number. Please only use numbers");
+                    break;
+                }
+
+                infoArray ~= Info(InfoType.Address, address);
+                break;
+
             case "common":
             case "c":
                 write("Data: ");
@@ -374,14 +422,14 @@ void main()
         the amount of info added.
 
         Commands:
-            common | c  =  a string that represents something important to this person
-            person | p  =  a person, will ask for name and DoB
-            pet | z     =  a pet
-            date | d    =  an important date
-            phone | e   =  a phone number
-            address | w   =  a phone number
-            finish | f  =  finish and generate
-            quit | q    =  quit without generating
+            common | c   =  a string that represents something important to this person
+            person | p   =  a person, will ask for name and DoB
+            pet | z      =  a pet
+            date | d     =  an important date
+            phone | e    =  a phone number
+            address | w  =  an address number or zip code
+            finish | f   =  finish and generate
+            quit | q     =  quit without generating
     });
 
     getData();

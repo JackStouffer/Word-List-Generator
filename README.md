@@ -24,3 +24,19 @@ Using leaked password databases as a sample, roughly 30% of people will use a
 password which this program will catch. According to other research, another
 10% of people use passwords in the 500 top worst password list. So using this
 program in conjunction with other wordlists can yield almost half of all accounts.
+
+## Install
+
+First, [install dub](https://code.dlang.org/download).
+
+Next,
+
+```
+$ dub fetch wordlist_gen
+```
+
+## Use
+
+```
+$ dub run wordlist_gen
+```
