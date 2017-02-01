@@ -1,7 +1,8 @@
-import std.stdio;
 import std.datetime;
-import std.typecons;
 import std.range.primitives;
+import std.stdio;
+import std.traits;
+import std.typecons;
 
 enum InfoType
 {
@@ -261,15 +262,30 @@ void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(
  * Returns:
  *     a newly allocated string
  */
-auto toLeet(string input)
+auto toLeet(Range)(Range input) if (
+    isInputRange!Range && is(Unqual!(ElementEncodingType!Range) == char))
 {
-    import std.string : replace, toLower;
+    import std.algorithm.iteration : map;
+    import std.array : array;
+    import std.ascii : toLower;
+    import std.utf : byChar;
 
-    return input.toLower
-        .replace("e", "3")
-        .replace("t", "7")
-        .replace("l", "1");
+    return input.byChar.map!((a) {
+        auto c = a.toLower;
+        switch (c)
+        {
+            case 'e':
+                return '3';
+            case 't':
+                return '7';
+            case 'l':
+                return '1';
+            default:
+                return c;
+        }
+    }).array;
 }
+
 
 void getData()
 {
