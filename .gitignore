@@ -1,3 +1,4 @@
 wordlist_*
 .dub/
 *.sublime-*
+*.log
