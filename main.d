@@ -61,14 +61,15 @@ void genWordList()
     import std.array : appender, array;
     import std.conv : to;
     import std.string : toLower, capitalize, toUpper;
+    import std.range : chain;
 
     writeln("Generating list of password guesses");
+    auto f = File("wordlist_" ~ to!string(cast(TimeOfDay) Clock.currTime()) ~ ".txt", "w");
 
-    auto app = appender!(string[])();
-    app.reserve(infoArray.length * 40_200);
+    auto app = f.lockingTextWriter();
 
-    // take all people and pet names,  their
-    // upper, lower, leet, and capitalized versions
+    // take all people and pet names, their
+    // lower and capitalized versions
     // and get all combinations of them
     infoArray
         .filter!(a => a.type == InfoType.Person || a.type == InfoType.Pet)
@@ -84,10 +85,7 @@ void genWordList()
     foreach (item; infoArray.filter!(a => a.type == InfoType.Date))
         guessesFromDate(item, app);
 
-    auto f = File("wordlist_" ~ to!string(cast(TimeOfDay) Clock.currTime()) ~ ".txt", "w");
-    writeln("Writing ", app.data.length, " guesses to file ", f.name);
-
-    app.data.map!(a => a ~ "\n").copy(f.lockingTextWriter());
+    writeln("Wrote ", f.size, " bytes to file ", f.name);
 }
 
 
@@ -102,8 +100,9 @@ void genWordList()
 void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
 {
     import std.algorithm.searching : canFind;
-    import std.conv : to;
+    import std.conv : to, toChars;
     import std.string : replace, toLower, capitalize, toUpper;
+    import std.range : chain;
 
     // some people leave spaces in their passwords
     // most don't
@@ -123,25 +122,25 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     bool useLeet = leet != lower && leet != capitalized && leet != upper;
 
     // The most simple, this would probably get detected with most wordlists
-    output.put(lower);
-    output.put(capitalized);
-    output.put(upper);
+    output.put(chain(lower, "\n"));
+    output.put(chain(capitalized, "\n"));
+    output.put(chain(upper, "\n"));
     if (useLeet)
-        output.put(leet);
+        output.put(chain(leet, "\n"));
 
     // for some reason surrounding something with either 1's or !'s
     // is a very common pattern
-    output.put("1" ~ lower ~ "1");
-    output.put("1" ~ capitalized ~ "1");
-    output.put("1" ~ upper ~ "1");
-    output.put("!" ~ lower ~ "!");
-    output.put("!" ~ capitalized ~ "!");
-    output.put("!" ~ upper ~ "!");
+    output.put(chain("1", lower, "1", "\n"));
+    output.put(chain("1", capitalized, "1", "\n"));
+    output.put(chain("1", upper, "1", "\n"));
+    output.put(chain("!", lower, "!", "\n"));
+    output.put(chain("!", capitalized, "!", "\n"));
+    output.put(chain("!", upper, "!", "\n"));
 
     if (useLeet)
     {
-        output.put("1" ~ leet ~ "1");
-        output.put("!" ~ leet ~ "!");
+        output.put(chain("1", leet, "1", "\n"));
+        output.put(chain("!", leet, "!", "\n"));
     }
 
     // Using numbers at the end in order to satisfy either a length
@@ -149,21 +148,21 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     // Also covers people who put a year at the end of something
     foreach (i; 0 .. 10_000)
     {
-        auto s = to!string(i);
-        output.put(lower ~ s);
-        output.put(capitalized ~ s);
-        output.put(upper ~ s);
+        output.put(chain(lower, i.toChars, "\n"));
+        output.put(chain(capitalized, i.toChars, "\n"));
+        output.put(chain(upper, i.toChars, "\n"));
         if (useLeet)
-            output.put(leet ~ s);
+            output.put(chain(leet, i.toChars, "\n"));
     }
+
     // other very common patterns
     foreach (s; commonPatterns)
     {
-        output.put(lower ~ s);
-        output.put(capitalized ~ s);
-        output.put(upper ~ s);
-        if (useLeet)    
-            output.put(leet ~ s);
+        output.put(chain(lower, s, "\n"));
+        output.put(chain(capitalized, s, "\n"));
+        output.put(chain(upper, s, "\n"));
+        if (useLeet)
+            output.put(chain(leet, s, "\n"));
     }
 
     if (info.type == InfoType.Person)
@@ -181,37 +180,40 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
  */
 void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
 {
-    import std.conv : to;
+    import std.conv : to, toChars;
+    import std.range : chain;
 
-    auto year = to!string(info.date.year);
-    auto month = to!string(cast(int) info.date.month);
-    auto day = to!string(info.date.day);
+    auto year = toChars(cast(int) info.date.year);
+    auto month = toChars(cast(int) info.date.month);
+    auto day = toChars(cast(int) info.date.day);
 
-    output.put(year ~ month ~ day);
-    output.put(year[2 .. $] ~ month ~ day);
-    output.put(year ~ month);
-    output.put(year[2 .. $] ~ month);
-    output.put(month ~ year);
-    output.put(month ~ year[2 .. $]);
-    output.put(month ~ day);
-    output.put(month ~ day ~ year);
-    output.put(month ~ day ~ year[2 .. $]);
-    output.put(day ~ month ~ year);
-    output.put(day ~ month ~ year[2 .. $]);
-    output.put(day ~ month);
+    output.put(chain(year, month, day, "\n"));
+    output.put(chain(year[2 .. year.length], month, day, "\n"));
+    output.put(chain(year, month, "\n"));
+    output.put(chain(year[2 .. year.length], month, "\n"));
+    output.put(chain(month, year, "\n"));
+    output.put(chain(month, year[2 .. year.length], "\n"));
+    output.put(chain(month, day, "\n"));
+    output.put(chain(month, day, year, "\n"));
+    output.put(chain(month, day, year[2 .. year.length], "\n"));
+    output.put(chain(day, month, year, "\n"));
+    output.put(chain(day, month, year[2 .. year.length], "\n"));
+    output.put(chain(day, month, "\n"));
 
     foreach (sep; [",", ".", "/", "-", "_"])
     {
-        output.put(year ~ sep ~ month ~ sep ~ day);
-        output.put(year[2 .. $] ~ sep ~ month ~ sep ~ day);
-        output.put(year ~ sep ~ month);
-        output.put(year[2 .. $] ~ sep ~ month);
-        output.put(month ~ sep ~ year);
-        output.put(month ~ sep ~ year[2 .. $]);
-        output.put(month ~ sep ~ day);
-        output.put(day ~ sep ~ month ~ sep ~ year);
-        output.put(month ~ sep ~ day ~ sep ~ year);
-        output.put(day ~ sep ~ month);
+        output.put(chain(year, sep, month, sep, day, "\n"));
+        output.put(chain(year[2 .. year.length], sep, month, sep, day, "\n"));
+        output.put(chain(year, sep, month, "\n"));
+        output.put(chain(year[2 .. year.length], sep, month, "\n"));
+        output.put(chain(month, sep, year, "\n"));
+        output.put(chain(month, sep, year[2 .. year.length], "\n"));
+        output.put(chain(month, sep, day, "\n"));
+        output.put(chain(month, sep, day, sep, year, "\n"));
+        output.put(chain(month, sep, day, sep, year[2 .. year.length], "\n"));
+        output.put(chain(day, sep, month, sep, year, "\n"));
+        output.put(chain(day, sep, month, sep, year[2 .. year.length], "\n"));
+        output.put(chain(day, sep, month, "\n"));
     }
 }
 
@@ -222,6 +224,7 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
 void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(Output, string))
 {
     import std.math : pow;
+    import std.range : chain;
 
     immutable powLen = pow(2, input.length);
 
@@ -236,7 +239,7 @@ void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(
         }
 
         if (temp != "")
-            output.put(temp);
+            output.put(chain(temp, "\n"));
     }
 }
 
