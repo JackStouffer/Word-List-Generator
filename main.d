@@ -37,6 +37,17 @@ struct Info
 }
 
 Info[] infoArray;
+static immutable commonPatterns = [
+    "12345", "123456", "1234567", "12345678", "123456789", "1234567890",
+    "00", "000", "0000", "00000", "000000", "0000000", "00000000", "000000000",
+    "0000000000", "11111111", "987654321", "1QAZ2WSX", "1Qaz2Wsx", "1qaz2wsx",
+    "AAAAAA", "ABC", "ABCD1234", "ASDF", "ASDFASDF", "ASDFGHJKL", "Aaaaaa",
+    "Abc", "Abcd1234", "Asdf", "Asdfasdf", "Asdfghjkl", "PASSWORD", "Password",
+    "Q1W2E3R4", "QAZWSX", "QWERT", "QWERTY", "QWERTYUIOP", "Qazwsx", "Qwert",
+    "Qwerty", "Qwertyuiop", "ZXCVBNM", "Zxcvbnm", "aaaaaa", "abc", "abcd1234",
+    "asdf", "asdfasdf", "asdfghjkl", "password", "q1w2e3r4", "qazwsx", "qwert",
+    "qwerty", "qwertyuiop", "zxcvbnm"
+];
 
 
 /**
@@ -54,26 +65,17 @@ void genWordList()
     writeln("Generating list of password guesses");
 
     auto app = appender!(string[])();
-    app.reserve(infoArray.length * 40_100);
+    app.reserve(infoArray.length * 40_200);
 
     // take all people and pet names,  their
     // upper, lower, leet, and capitalized versions
     // and get all combinations of them
-    auto personCombinations = infoArray
-        .filter!(a => a.type == InfoType.Person)
-        .map!(a => [a.data.capitalize, a.data.toLower, a.data.toUpper, a.data.toLeet])
+    infoArray
+        .filter!(a => a.type == InfoType.Person || a.type == InfoType.Pet)
+        .map!(a => [a.data.capitalize, a.data.toLower])
         .joiner
         .array
-        .combinations;
-    app.put(personCombinations);
-
-    auto petCombinations = infoArray
-        .filter!(a => a.type == InfoType.Pet)
-        .map!(a => [a.data.capitalize, a.data.toLower, a.data.toUpper, a.data.toLeet])
-        .joiner
-        .array
-        .combinations;
-    app.put(petCombinations);
+        .combinations(app);
 
     //Get standard guesses from dates and strings
     foreach (item; infoArray.filter!(a => a.type != InfoType.Date))
@@ -101,7 +103,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
 {
     import std.algorithm.searching : canFind;
     import std.conv : to;
-    import std.string : toLower, capitalize, toUpper;
+    import std.string : replace, toLower, capitalize, toUpper;
 
     // some people leave spaces in their passwords
     // most don't
@@ -155,9 +157,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
             output.put(leet ~ s);
     }
     // other very common patterns
-    foreach (s; ["12345", "123456", "1234567", "12345678", "123456789", "1234567890",
-        "00", "000", "0000", "00000", "000000", "0000000", "00000000", "000000000", "0000000000",
-        "asdf", "qwerty", "zxcvbnm", "asdfghjkl", "ABC", "ASDF", "ZXCVBNM", "QWERTY"])
+    foreach (s; commonPatterns)
     {
         output.put(lower ~ s);
         output.put(capitalized ~ s);
@@ -219,11 +219,10 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
  * Takes an array of strings and returns an array of strings of all
  * combinations of the inputs. O(n^2)
  */
-auto combinations(string[] input)
+void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(Output, string))
 {
     import std.math : pow;
 
-    string[] combinations;
     immutable powLen = pow(2, input.length);
 
     foreach (i; 0 .. powLen)
@@ -237,10 +236,8 @@ auto combinations(string[] input)
         }
 
         if (temp != "")
-            combinations ~= temp;
+            output.put(temp);
     }
-
-    return combinations;
 }
 
 
@@ -367,7 +364,7 @@ void main()
         * address number
         * all of the owners family members and their dates of birth
         * important dates, like an anniversary
-        * names of the owners pets
+        * names of the owners past/current pets
         * places where the person has lived
         * names of the companies this person has worked for
         * make or model of cars the person has owned
