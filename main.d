@@ -45,16 +45,37 @@ Info[] infoArray;
  */
 void genWordList()
 {
-    import std.algorithm.iteration : map, filter;
+    import std.algorithm.iteration : map, filter, joiner;
     import std.algorithm.mutation : copy;
-    import std.array : appender;
+    import std.array : appender, array;
     import std.conv : to;
+    import std.string : toLower, capitalize, toUpper;
 
     writeln("Generating list of password guesses");
 
     auto app = appender!(string[])();
     app.reserve(infoArray.length * 40_100);
 
+    // take all people and pet names,  their
+    // upper, lower, leet, and capitalized versions
+    // and get all combinations of them
+    auto personCombinations = infoArray
+        .filter!(a => a.type == InfoType.Person)
+        .map!(a => [a.data.capitalize, a.data.toLower, a.data.toUpper, a.data.toLeet])
+        .joiner
+        .array
+        .combinations;
+    app.put(personCombinations);
+
+    auto petCombinations = infoArray
+        .filter!(a => a.type == InfoType.Pet)
+        .map!(a => [a.data.capitalize, a.data.toLower, a.data.toUpper, a.data.toLeet])
+        .joiner
+        .array
+        .combinations;
+    app.put(petCombinations);
+
+    //Get standard guesses from dates and strings
     foreach (item; infoArray.filter!(a => a.type != InfoType.Date))
         commonGuesses(item, app);
 
@@ -80,7 +101,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
 {
     import std.algorithm.searching : canFind;
     import std.conv : to;
-    import std.string : replace, toLower, capitalize, toUpper;
+    import std.string : toLower, capitalize, toUpper;
 
     // some people leave spaces in their passwords
     // most don't
@@ -94,7 +115,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     auto lower = info.data.toLower;
     auto capitalized = info.data.capitalize;
     auto upper = info.data.toUpper;
-    auto leet = info.data.toLower.replace("e", "3").replace("t", "7").replace("l", "1");
+    auto leet = info.data.toLeet;
     // optimize for rare case where there are no "1337" characters in
     // the item
     bool useLeet = leet != lower && leet != capitalized && leet != upper;
@@ -174,7 +195,9 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
     output.put(month ~ year[2 .. $]);
     output.put(month ~ day);
     output.put(month ~ day ~ year);
+    output.put(month ~ day ~ year[2 .. $]);
     output.put(day ~ month ~ year);
+    output.put(day ~ month ~ year[2 .. $]);
     output.put(day ~ month);
 
     foreach (sep; [",", ".", "/", "-", "_"])
@@ -192,6 +215,53 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
     }
 }
 
+/**
+ * Takes an array of strings and returns an array of strings of all
+ * combinations of the inputs. O(n^2)
+ */
+auto combinations(string[] input)
+{
+    import std.math : pow;
+
+    string[] combinations;
+    immutable powLen = pow(2, input.length);
+
+    foreach (i; 0 .. powLen)
+    {
+        string temp = "";
+
+        foreach (j; 0 .. input.length)
+        {
+            if (i & pow(2, j))
+                temp ~= input[j];
+        }
+
+        if (temp != "")
+            combinations ~= temp;
+    }
+
+    return combinations;
+}
+
+
+/**
+ * Takes a string and replaces the e's with 3's, the t's with 7's, and the
+ * l's with 1's.
+ *
+ * Params:
+ *     input = the string to transform
+ * Returns:
+ *     a newly allocated string
+ */
+auto toLeet(string input)
+{
+    import std.string : replace, toLower;
+
+    return input.toLower
+        .replace("e", "3")
+        .replace("t", "7")
+        .replace("l", "1");
+}
 
 void getData()
 {
@@ -293,6 +363,8 @@ void main()
         include are things like
 
         * the owner and their date of birth
+        * phone numbers
+        * address number
         * all of the owners family members and their dates of birth
         * important dates, like an anniversary
         * names of the owners pets
