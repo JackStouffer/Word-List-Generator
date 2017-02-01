@@ -154,7 +154,7 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     // Using numbers at the end in order to satisfy either a length
     // or number requirement is also very common
     // Also covers people who put a year at the end of something
-    foreach (i; 0 .. 10_000)
+    foreach (i; 0 .. 3_000)
     {
         auto s = i.toChars;
         output.put(chain(lower, s, "\n"));
@@ -434,7 +434,7 @@ void main()
         * make or model of cars the person has owned
         * favorite bands
 
-        Generated files are roughly of length in lines of n*40000, where n is
+        Generated files are roughly of length in lines of n*12000, where n is
         the amount of info added.
 
         Commands:
