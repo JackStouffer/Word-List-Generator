@@ -123,34 +123,40 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
         commonGuesses(temp, output);
     }
 
-    auto lower = info.data.toLower;
-    auto capitalized = info.data.capitalize;
-    auto upper = info.data.toUpper;
-    auto leet = info.data.toLeet;
+    immutable lower = info.data.toLower;
+    immutable capitalized = info.data.capitalize;
+    immutable upper = info.data.toUpper;
+    immutable leet = info.data.toLeet;
     // optimize for the case where there are no "1337" characters in
     // the item
-    bool useLeet = leet != lower && leet != capitalized && leet != upper;
+    immutable useLeet = leet != lower && leet != capitalized && leet != upper;
 
     // The most simple, this would probably get detected with most wordlists
-    output.put(chain(lower, "\n"));
-    output.put(chain(capitalized, "\n"));
-    output.put(chain(upper, "\n"));
+    output.put(chain(
+        lower, "\n",
+        capitalized, "\n",
+        upper, "\n"
+    ));
     if (useLeet)
         output.put(chain(leet, "\n"));
 
     // for some reason surrounding something with either 1's or !'s
     // is a very common pattern
-    output.put(chain("1", lower, "1", "\n"));
-    output.put(chain("1", capitalized, "1", "\n"));
-    output.put(chain("1", upper, "1", "\n"));
-    output.put(chain("!", lower, "!", "\n"));
-    output.put(chain("!", capitalized, "!", "\n"));
-    output.put(chain("!", upper, "!", "\n"));
+    output.put(chain(
+        "1", lower, "1", "\n",
+        "1", capitalized, "1", "\n",
+        "1", upper, "1", "\n",
+        "!", lower, "!", "\n",
+        "!", capitalized, "!", "\n",
+        "!", upper, "!", "\n"
+    ));
 
     if (useLeet)
     {
-        output.put(chain("1", leet, "1", "\n"));
-        output.put(chain("!", leet, "!", "\n"));
+        output.put(chain(
+            "1", leet, "1", "\n",
+            "!", leet, "!", "\n"
+        ));
     }
 
     // Using numbers at the end in order to satisfy either a length
@@ -159,9 +165,11 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     foreach (i; 0 .. 3_000)
     {
         auto s = i.toChars;
-        output.put(chain(lower, s, "\n"));
-        output.put(chain(capitalized, s, "\n"));
-        output.put(chain(upper, s, "\n"));
+        output.put(chain(
+            lower, s, "\n",
+            capitalized, s, "\n",
+            upper, s, "\n"
+        ));
         if (useLeet)
             output.put(chain(leet, s, "\n"));
     }
@@ -169,9 +177,11 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     // other very common patterns
     foreach (s; commonPatterns)
     {
-        output.put(chain(lower, s, "\n"));
-        output.put(chain(capitalized, s, "\n"));
-        output.put(chain(upper, s, "\n"));
+        output.put(chain(
+            lower, s, "\n",
+            capitalized, s, "\n",
+            upper, s, "\n"
+        ));
         if (useLeet)
             output.put(chain(leet, s, "\n"));
     }
@@ -198,33 +208,48 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
     auto month = toChars(cast(int) info.date.month);
     auto day = toChars(cast(int) info.date.day);
 
-    output.put(chain(year, month, day, "\n"));
-    output.put(chain(year[2 .. year.length], month, day, "\n"));
-    output.put(chain(year, month, "\n"));
-    output.put(chain(year[2 .. year.length], month, "\n"));
-    output.put(chain(month, year, "\n"));
-    output.put(chain(month, year[2 .. year.length], "\n"));
-    output.put(chain(month, day, "\n"));
-    output.put(chain(month, day, year, "\n"));
-    output.put(chain(month, day, year[2 .. year.length], "\n"));
-    output.put(chain(day, month, year, "\n"));
-    output.put(chain(day, month, year[2 .. year.length], "\n"));
-    output.put(chain(day, month, "\n"));
+    if (info.type == InfoType.Person)
+    {
+        output.put(chain(
+            info.data, year, month, day, "\n",
+            info.data, day, month, year, "\n",
+            info.data, day, month, year[2 .. year.length], "\n",
+            info.data, month, year, "\n",
+            info.data, month, year[2 .. year.length], "\n"
+        ));
+    }
+
+    output.put(chain(
+        year, month, day, "\n",
+        year[2 .. year.length], month, day, "\n",
+        year, month, "\n",
+        year[2 .. year.length], month, "\n",
+        month, year, "\n",
+        month, year[2 .. year.length], "\n",
+        month, day, "\n",
+        month, day, year, "\n",
+        month, day, year[2 .. year.length], "\n",
+        day, month, year, "\n",
+        day, month, year[2 .. year.length], "\n",
+        day, month, "\n"
+    ));
 
     foreach (sep; seperators)
     {
-        output.put(chain(year, sep, month, sep, day, "\n"));
-        output.put(chain(year[2 .. year.length], sep, month, sep, day, "\n"));
-        output.put(chain(year, sep, month, "\n"));
-        output.put(chain(year[2 .. year.length], sep, month, "\n"));
-        output.put(chain(month, sep, year, "\n"));
-        output.put(chain(month, sep, year[2 .. year.length], "\n"));
-        output.put(chain(month, sep, day, "\n"));
-        output.put(chain(month, sep, day, sep, year, "\n"));
-        output.put(chain(month, sep, day, sep, year[2 .. year.length], "\n"));
-        output.put(chain(day, sep, month, sep, year, "\n"));
-        output.put(chain(day, sep, month, sep, year[2 .. year.length], "\n"));
-        output.put(chain(day, sep, month, "\n"));
+        output.put(chain(
+            year, sep, month, sep, day, "\n",
+            year[2 .. year.length], sep, month, sep, day, "\n",
+            year, sep, month, "\n",
+            year[2 .. year.length], sep, month, "\n",
+            month, sep, year, "\n",
+            month, sep, year[2 .. year.length], "\n",
+            month, sep, day, "\n",
+            month, sep, day, sep, year, "\n",
+            month, sep, day, sep, year[2 .. year.length], "\n",
+            day, sep, month, sep, year, "\n",
+            day, sep, month, sep, year[2 .. year.length], "\n",
+            day, sep, month, "\n"
+        ));
     }
 }
 
