@@ -14,6 +14,7 @@ enum InfoType
     Phone,
 }
 
+
 struct Info
 {
     InfoType type;
@@ -33,6 +34,7 @@ struct Info
         data = d;
     }
 }
+
 
 Info[] infoArray;
 static immutable commonPatterns = [
@@ -242,10 +244,8 @@ void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(
         string temp = "";
 
         foreach (j; 0 .. input.length)
-        {
             if (i & pow(2, j))
                 temp ~= input[j];
-        }
 
         if (temp != "")
             output.put(chain(temp, "\n"));
@@ -271,7 +271,7 @@ auto toLeet(Range)(Range input) if (
     import std.utf : byChar;
 
     return input.byChar.map!((a) {
-        auto c = a.toLower;
+        immutable c = a.toLower;
         switch (c)
         {
             case 'e':
@@ -409,6 +409,12 @@ void getData()
 
 void main()
 {
+    import core.memory : GC;
+
+    // Almost no garbage, no need to collect for short running
+    // program
+    GC.disable();
+
     writeln(q{
                             [Targeted Word List Generator]
 
