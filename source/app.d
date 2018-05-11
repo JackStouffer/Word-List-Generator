@@ -21,14 +21,14 @@ struct Info
     string data;
     Nullable!Date date;
 
-    this(InfoType t, string d, Date d2)
+    this(InfoType t, string d, Date d2) @safe pure
     {
         type = t;
         data = d;
         date = d2;
     }
 
-    this(InfoType t, string d)
+    this(InfoType t, string d) @safe pure
     {
         type = t;
         data = d;
@@ -110,6 +110,7 @@ void genWordList()
 void commonGuesses(Output)(Info info, ref Output output)
 if (isOutputRange!(Output, string))
 {
+    import std.algorithm.comparison : equal;
     import std.algorithm.searching : canFind;
     import std.conv : to, toChars;
     import std.string : replace, toLower, capitalize, toUpper;
@@ -125,39 +126,42 @@ if (isOutputRange!(Output, string))
         commonGuesses(temp, output);
     }
 
-    immutable lower = info.data.toLower;
-    immutable capitalized = info.data.capitalize;
-    immutable upper = info.data.toUpper;
-    immutable leet = info.data.toLeet;
+    auto lower = info.data.toLower.byCodeUnit;
+    auto capitalized = info.data.capitalize.byCodeUnit;
+    auto upper = info.data.toUpper.byCodeUnit;
+    auto leet = info.data.toLeet.byCodeUnit;
+    auto one = "1".byCodeUnit;
+    auto point = "!".byCodeUnit;
+    auto newLine = "\n".byCodeUnit;
     // optimize for the case where there are no "1337" characters in
     // the item
-    immutable useLeet = leet != lower && leet != capitalized && leet != upper;
+    immutable useLeet = !leet.equal(lower) && !leet.equal(capitalized) && !leet.equal(upper);
 
     // The most simple, this would probably get detected with most wordlists
     output.put(chain(
-        lower, "\n",
-        capitalized, "\n",
-        upper, "\n"
+        lower, newLine,
+        capitalized, newLine,
+        upper, newLine
     ));
     if (useLeet)
-        output.put(chain(leet, "\n"));
+        output.put(chain(leet, newLine));
 
     // for some reason surrounding something with either 1's or !'s
     // is a very common pattern
     output.put(chain(
-        "1", lower, "1", "\n",
-        "1", capitalized, "1", "\n",
-        "1", upper, "1", "\n",
-        "!", lower, "!", "\n",
-        "!", capitalized, "!", "\n",
-        "!", upper, "!", "\n"
+        one, lower, one, newLine,
+        one, capitalized, one, newLine,
+        one, upper, one, newLine,
+        point, lower, point, newLine,
+        point, capitalized, point, newLine,
+        point, upper, point, newLine
     ));
 
     if (useLeet)
     {
         output.put(chain(
-            "1", leet, "1", "\n",
-            "!", leet, "!", "\n"
+            one, leet, one, newLine,
+            point, leet, point, newLine
         ));
     }
 
@@ -168,24 +172,24 @@ if (isOutputRange!(Output, string))
     {
         auto s = i.toChars;
         output.put(chain(
-            lower.byCodeUnit, s, "\n".byCodeUnit,
-            capitalized.byCodeUnit, s, "\n".byCodeUnit,
-            upper.byCodeUnit, s, "\n".byCodeUnit
+            lower.byCodeUnit, s, newLine,
+            capitalized.byCodeUnit, s, newLine,
+            upper.byCodeUnit, s, newLine
         ));
         if (useLeet)
-            output.put(chain(leet.byCodeUnit, s, "\n".byCodeUnit));
+            output.put(chain(leet.byCodeUnit, s, newLine));
     }
 
     // other very common patterns
     foreach (s; commonPatterns)
     {
         output.put(chain(
-            lower.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit,
-            capitalized.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit,
-            upper.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit
+            lower.byCodeUnit, s.byCodeUnit, newLine,
+            capitalized.byCodeUnit, s.byCodeUnit, newLine,
+            upper.byCodeUnit, s.byCodeUnit, newLine
         ));
         if (useLeet)
-            output.put(chain(leet.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit));
+            output.put(chain(leet.byCodeUnit, s.byCodeUnit, newLine));
     }
 
     if (info.type == InfoType.Person)
@@ -211,51 +215,72 @@ if (isOutputRange!(Output, string))
     auto year = toChars(cast(int) info.date.year);
     auto month = toChars(cast(int) info.date.month);
     auto day = toChars(cast(int) info.date.day);
+    auto newLine = "\n".byCodeUnit;
 
     if (info.type == InfoType.Person)
     {
         output.put(chain(
-            info.data.byCodeUnit, year, month, day, "\n".byCodeUnit,
-            info.data.byCodeUnit, day, month, year, "\n".byCodeUnit,
-            info.data.byCodeUnit, day, month, year[2 .. year.length], "\n".byCodeUnit,
-            info.data.byCodeUnit, month, year, "\n".byCodeUnit,
-            info.data.byCodeUnit, month, year[2 .. year.length], "\n".byCodeUnit
+            info.data.byCodeUnit, year, month, day, newLine,
+            info.data.byCodeUnit, day, month, year, newLine,
+            info.data.byCodeUnit, day, month, year[2 .. year.length], newLine,
+            info.data.byCodeUnit, month, year, newLine,
+            info.data.byCodeUnit, month, year[2 .. year.length], newLine
         ));
     }
 
     output.put(chain(
-        year, month, day, "\n".byCodeUnit,
-        year[2 .. year.length], month, day, "\n".byCodeUnit,
-        year, month, "\n".byCodeUnit,
-        year[2 .. year.length], month, "\n".byCodeUnit,
-        month, year, "\n".byCodeUnit,
-        month, year[2 .. year.length], "\n".byCodeUnit,
-        month, day, "\n".byCodeUnit,
-        month, day, year, "\n".byCodeUnit,
-        month, day, year[2 .. year.length], "\n".byCodeUnit,
-        day, month, year, "\n".byCodeUnit,
-        day, month, year[2 .. year.length], "\n".byCodeUnit,
-        day, month, "\n".byCodeUnit
+        year, newLine,
+        year, month, day, newLine,
+        year[2 .. year.length], month, day, newLine,
+        year, month, newLine,
+        year[2 .. year.length], month, newLine,
+        month, year, newLine,
+        month, year[2 .. year.length], newLine,
+        month, day, newLine,
+        month, day, year, newLine,
+        month, day, year[2 .. year.length], newLine,
+        day, month, year, newLine,
+        day, month, year[2 .. year.length], newLine,
+        day, month, newLine
     ));
 
     foreach (s; seperators)
     {
         auto sep = s.byCodeUnit;
         output.put(chain(
-            year, sep, month, sep, day, "\n".byCodeUnit,
-            year[2 .. year.length], sep, month, sep, day, "\n".byCodeUnit,
-            year, sep, month, "\n".byCodeUnit,
-            year[2 .. year.length], sep, month, "\n".byCodeUnit,
-            month, sep, year, "\n".byCodeUnit,
-            month, sep, year[2 .. year.length], "\n".byCodeUnit,
-            month, sep, day, "\n".byCodeUnit,
-            month, sep, day, sep, year, "\n".byCodeUnit,
-            month, sep, day, sep, year[2 .. year.length], "\n".byCodeUnit,
-            day, sep, month, sep, year, "\n".byCodeUnit,
-            day, sep, month, sep, year[2 .. year.length], "\n".byCodeUnit,
-            day, sep, month, "\n".byCodeUnit
+            year, sep, month, sep, day, newLine,
+            year[2 .. year.length], sep, month, sep, day, newLine,
+            year, sep, month, newLine,
+            year[2 .. year.length], sep, month, newLine,
+            month, sep, year, newLine,
+            month, sep, year[2 .. year.length], newLine,
+            month, sep, day, newLine,
+            month, sep, day, sep, year, newLine,
+            month, sep, day, sep, year[2 .. year.length], newLine,
+            day, sep, month, sep, year, newLine,
+            day, sep, month, sep, year[2 .. year.length], newLine,
+            day, sep, month, newLine
         ));
     }
+}
+
+@safe unittest
+{
+    import std.array : appender;
+    import std.algorithm.searching : canFind;
+    import std.stdio;
+
+    auto app = appender!(char[])();
+
+    auto expected = [
+        "2018", "2018-1-1", "201811", "112018", "2018.1.1",
+        "2018/1/1", "1/1/2018", "1.1.2018", "1118"
+    ];
+    Info i = Info(InfoType.Date, "", Date(2018, 1, 1));
+    guessesFromDate(i, app);
+    auto data = app.data;
+    foreach (e; expected)
+        assert(data.canFind(e));
 }
 
 /**
@@ -283,6 +308,22 @@ if (isOutputRange!(Output, string))
     }
 }
 
+@safe unittest
+{
+    import std.array : appender;
+    import std.algorithm.searching : canFind;
+
+    auto app = appender!(char[])();
+
+    ["Test", "Hello", "World"].combinations(app);
+    auto expected = [
+        "Test", "Hello", "World", "TestHello", "TestWorld",
+        "TestHelloWorld", "HelloWorld"
+    ];
+    auto data = app.data;
+    foreach (e; expected)
+        assert(data.canFind(e));
+}
 
 /**
  * Takes a string and replaces the e's with 3's, the t's with 7's, and the
@@ -311,6 +352,8 @@ if (isInputRange!Range && is(Unqual!(ElementEncodingType!Range) == char))
                 return '7';
             case 'l':
                 return '1';
+            case 'o':
+                return '0';
             default:
                 return c;
         }
@@ -320,6 +363,7 @@ if (isInputRange!Range && is(Unqual!(ElementEncodingType!Range) == char))
 
 @safe pure unittest
 {
+    assert("ford".toLeet == "f0rd");
     assert("test".toLeet == "73s7");
     assert("leet".toLeet == "1337");
 }
@@ -444,53 +488,59 @@ void getData()
     }
 }
 
-
-void main()
+version(unittest)
 {
-    import core.memory : GC;
+    void main() {}
+}
+else
+{
+    void main()
+    {
+        import core.memory : GC;
 
-    // Almost no garbage, no need to collect for short running
-    // program
-    GC.disable();
+        // Almost no garbage, no need to collect for short running
+        // program
+        GC.disable();
 
-    writeln(q{
-                            [Targeted Word List Generator]
+        writeln(q{
+                                [Targeted Word List Generator]
 
-        FOR EDUCATIONAL PURPOSES ONLY. THE AUTHOR DOES NOT CONDONE NOR ENDORSE
-        UNAUTHORIZED ACCESS OF COMPUTER SYSTEMS. Licensed under the MIT License.
+            FOR EDUCATIONAL PURPOSES ONLY. THE AUTHOR DOES NOT CONDONE NOR ENDORSE
+            UNAUTHORIZED ACCESS OF COMPUTER SYSTEMS. Licensed under the MIT License.
 
-        Generates a password list using information about the owner of the
-        device you are attempting to access.
+            Generates a password list using information about the owner of the
+            device you are attempting to access.
 
-        It is very common for people to create passwords using items from
-        their daily lives. So this program takes that info and generates
-        common password formats from it. Good examples of information to
-        include are things like
+            It is very common for people to create passwords using items from
+            their daily lives. So this program takes that info and generates
+            common password formats from it. Good examples of information to
+            include are things like
 
-        * the owner and their date of birth
-        * phone numbers
-        * address number
-        * all of the owners family members and their dates of birth
-        * important dates, like an anniversary
-        * names of the owners past/current pets
-        * places where the person has lived
-        * names of the companies this person has worked for
-        * make or model of cars the person has owned
-        * favorite bands
+            * the owner and their date of birth
+            * phone numbers
+            * address number
+            * all of the owners family members and their dates of birth
+            * important dates, like an anniversary
+            * names of the owners past/current pets
+            * places where the person has lived
+            * names of the companies this person has worked for
+            * make or model of cars the person has owned
+            * favorite bands
 
-        Generated files are roughly of length in lines of n*12000, where n is
-        the amount of info added.
+            Generated files are roughly of length in lines of n*12000, where n is
+            the amount of info added.
 
-        Commands:
-            common | c   =  a string that represents something important to this person
-            person | p   =  a person, will ask for name and DoB
-            pet | z      =  a pet
-            date | d     =  an important date
-            phone | e    =  a phone number
-            address | w  =  an address number or zip code
-            finish | f   =  finish and generate
-            quit | q     =  quit without generating
-    });
+            Commands:
+                common | c   =  a string that represents something important to this person
+                person | p   =  a person, will ask for name and DoB
+                pet | z      =  a pet
+                date | d     =  an important date
+                phone | e    =  a phone number
+                address | w  =  an address number or zip code
+                finish | f   =  finish and generate
+                quit | q     =  quit without generating
+        });
 
-    getData();
+        getData();
+    }
 }
