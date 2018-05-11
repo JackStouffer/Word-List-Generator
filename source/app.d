@@ -107,12 +107,14 @@ void genWordList()
  *     info = the Info to gen guesses from
  *     ouput = an Output range for strings to put the guesses
  */
-void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
+void commonGuesses(Output)(Info info, ref Output output)
+if (isOutputRange!(Output, string))
 {
     import std.algorithm.searching : canFind;
     import std.conv : to, toChars;
     import std.string : replace, toLower, capitalize, toUpper;
     import std.range : chain;
+    import std.utf : byCodeUnit;
 
     // some people leave spaces in their passwords
     // most don't
@@ -166,24 +168,24 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
     {
         auto s = i.toChars;
         output.put(chain(
-            lower, s, "\n",
-            capitalized, s, "\n",
-            upper, s, "\n"
+            lower.byCodeUnit, s, "\n".byCodeUnit,
+            capitalized.byCodeUnit, s, "\n".byCodeUnit,
+            upper.byCodeUnit, s, "\n".byCodeUnit
         ));
         if (useLeet)
-            output.put(chain(leet, s, "\n"));
+            output.put(chain(leet.byCodeUnit, s, "\n".byCodeUnit));
     }
 
     // other very common patterns
     foreach (s; commonPatterns)
     {
         output.put(chain(
-            lower, s, "\n",
-            capitalized, s, "\n",
-            upper, s, "\n"
+            lower.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit,
+            capitalized.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit,
+            upper.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit
         ));
         if (useLeet)
-            output.put(chain(leet, s, "\n"));
+            output.put(chain(leet.byCodeUnit, s.byCodeUnit, "\n".byCodeUnit));
     }
 
     if (info.type == InfoType.Person)
@@ -199,10 +201,12 @@ void commonGuesses(Output)(Info info, ref Output output) if (isOutputRange!(Outp
  *     info = the Info to gen guesses from
  *     ouput = an Output range for strings to put the guesses
  */
-void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Output, string))
+void guessesFromDate(Output)(Info info, ref Output output)
+if (isOutputRange!(Output, string))
 {
     import std.conv : to, toChars;
     import std.range : chain;
+    import std.utf : byCodeUnit;
 
     auto year = toChars(cast(int) info.date.year);
     auto month = toChars(cast(int) info.date.month);
@@ -211,44 +215,45 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
     if (info.type == InfoType.Person)
     {
         output.put(chain(
-            info.data, year, month, day, "\n",
-            info.data, day, month, year, "\n",
-            info.data, day, month, year[2 .. year.length], "\n",
-            info.data, month, year, "\n",
-            info.data, month, year[2 .. year.length], "\n"
+            info.data.byCodeUnit, year, month, day, "\n".byCodeUnit,
+            info.data.byCodeUnit, day, month, year, "\n".byCodeUnit,
+            info.data.byCodeUnit, day, month, year[2 .. year.length], "\n".byCodeUnit,
+            info.data.byCodeUnit, month, year, "\n".byCodeUnit,
+            info.data.byCodeUnit, month, year[2 .. year.length], "\n".byCodeUnit
         ));
     }
 
     output.put(chain(
-        year, month, day, "\n",
-        year[2 .. year.length], month, day, "\n",
-        year, month, "\n",
-        year[2 .. year.length], month, "\n",
-        month, year, "\n",
-        month, year[2 .. year.length], "\n",
-        month, day, "\n",
-        month, day, year, "\n",
-        month, day, year[2 .. year.length], "\n",
-        day, month, year, "\n",
-        day, month, year[2 .. year.length], "\n",
-        day, month, "\n"
+        year, month, day, "\n".byCodeUnit,
+        year[2 .. year.length], month, day, "\n".byCodeUnit,
+        year, month, "\n".byCodeUnit,
+        year[2 .. year.length], month, "\n".byCodeUnit,
+        month, year, "\n".byCodeUnit,
+        month, year[2 .. year.length], "\n".byCodeUnit,
+        month, day, "\n".byCodeUnit,
+        month, day, year, "\n".byCodeUnit,
+        month, day, year[2 .. year.length], "\n".byCodeUnit,
+        day, month, year, "\n".byCodeUnit,
+        day, month, year[2 .. year.length], "\n".byCodeUnit,
+        day, month, "\n".byCodeUnit
     ));
 
-    foreach (sep; seperators)
+    foreach (s; seperators)
     {
+        auto sep = s.byCodeUnit;
         output.put(chain(
-            year, sep, month, sep, day, "\n",
-            year[2 .. year.length], sep, month, sep, day, "\n",
-            year, sep, month, "\n",
-            year[2 .. year.length], sep, month, "\n",
-            month, sep, year, "\n",
-            month, sep, year[2 .. year.length], "\n",
-            month, sep, day, "\n",
-            month, sep, day, sep, year, "\n",
-            month, sep, day, sep, year[2 .. year.length], "\n",
-            day, sep, month, sep, year, "\n",
-            day, sep, month, sep, year[2 .. year.length], "\n",
-            day, sep, month, "\n"
+            year, sep, month, sep, day, "\n".byCodeUnit,
+            year[2 .. year.length], sep, month, sep, day, "\n".byCodeUnit,
+            year, sep, month, "\n".byCodeUnit,
+            year[2 .. year.length], sep, month, "\n".byCodeUnit,
+            month, sep, year, "\n".byCodeUnit,
+            month, sep, year[2 .. year.length], "\n".byCodeUnit,
+            month, sep, day, "\n".byCodeUnit,
+            month, sep, day, sep, year, "\n".byCodeUnit,
+            month, sep, day, sep, year[2 .. year.length], "\n".byCodeUnit,
+            day, sep, month, sep, year, "\n".byCodeUnit,
+            day, sep, month, sep, year[2 .. year.length], "\n".byCodeUnit,
+            day, sep, month, "\n".byCodeUnit
         ));
     }
 }
@@ -257,7 +262,8 @@ void guessesFromDate(Output)(Info info, ref Output output) if (isOutputRange!(Ou
  * Takes an array of strings and returns an array of strings of all
  * combinations of the inputs. O(n^2)
  */
-void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(Output, string))
+void combinations(Output)(string[] input, ref Output output)
+if (isOutputRange!(Output, string))
 {
     import std.math : pow;
     import std.range : chain;
@@ -287,8 +293,8 @@ void combinations(Output)(string[] input, ref Output output) if (isOutputRange!(
  * Returns:
  *     a newly allocated string
  */
-auto toLeet(Range)(Range input) if (
-    isInputRange!Range && is(Unqual!(ElementEncodingType!Range) == char))
+auto toLeet(Range)(Range input)
+if (isInputRange!Range && is(Unqual!(ElementEncodingType!Range) == char))
 {
     import std.algorithm.iteration : map;
     import std.array : array;
@@ -309,6 +315,13 @@ auto toLeet(Range)(Range input) if (
                 return c;
         }
     }).array;
+}
+
+
+@safe pure unittest
+{
+    assert("test".toLeet == "73s7");
+    assert("leet".toLeet == "1337");
 }
 
 
